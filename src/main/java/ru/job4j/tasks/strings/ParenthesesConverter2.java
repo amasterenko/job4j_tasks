@@ -1,6 +1,7 @@
 package ru.job4j.tasks.strings;
 
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 
@@ -19,46 +20,55 @@ import java.util.Set;
  * - числа означают только число повторений
  * - скобки только для обозначения повторяющихся подстрок
  * - входная строка всегда валидна.
+ *
+ * The class converts an input string with parentheses to an output string
+ * using two stacks.
+ * For example: 2[x3[y]]z will be converted to xyyyxyyyz
+ *
+ * @author AndrewMs
+ * @version 1.0
  */
 
-public class ParseParentheses {
+public class ParenthesesConverter2 {
     private final String in;
     private int curIndx = 0;
     private final Set<Character> numChars = new HashSet<>(List.of(
             '0', '1', '2', '3', '4', '5', '6', '7', '8', '9'));
+    private final LinkedList<Integer> stackOfRepeats = new LinkedList<>();
+    private final LinkedList<String> stackOfSymbols = new LinkedList<>();
 
-    public ParseParentheses(String in) {
+    public ParenthesesConverter2(String in) {
         this.in = in;
     }
 
-    public String start() {
-        return goInsideParentheses(1);
-    }
-
-    private String goInsideParentheses(int numOfRepeating) {
-        StringBuilder sb = new StringBuilder();
-        StringBuilder num = new StringBuilder();
+    private String convert() {
+        StringBuilder curSymbols = new StringBuilder();
+        StringBuilder repeats = new StringBuilder();
         while (curIndx < in.length()) {
             char ch = in.charAt(curIndx++);
             if (numChars.contains(ch)) {
-                num.append(ch);
+                repeats.append(ch);
                 continue;
             }
             if (ch == '[') {
-                sb.append(goInsideParentheses(Integer.parseInt(num.toString())));
-                num.delete(0, num.length() - 1);
+                stackOfRepeats.push(Integer.parseInt(repeats.toString()));
+                stackOfSymbols.push(curSymbols.toString());
+                repeats.delete(0, repeats.length());
+                curSymbols.delete(0, curSymbols.length());
                 continue;
             }
             if (ch == ']') {
-                return sb.toString().repeat(numOfRepeating);
+                curSymbols = new StringBuilder(stackOfSymbols.pop())
+                        .append(curSymbols.toString().repeat(stackOfRepeats.pop()));
+                continue;
             }
-            sb.append(ch);
+            curSymbols.append(ch);
         }
-        return sb.toString();
+        return curSymbols.toString();
     }
 
     public static void main(String[] args) {
-        ParseParentheses parse = new ParseParentheses("3[x2[y2[z]y]]z");
-        System.out.println(parse.start());
+        ParenthesesConverter2 parse = new ParenthesesConverter2("12[xx2[y]]"); //3[x2[y2[z]y]]z
+        System.out.println(parse.convert());
     }
 }
